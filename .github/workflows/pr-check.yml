@@ -1,0 +1,38 @@
+name: School-ERP-Software-Action
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  test:
+    name: local
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Block merge on test failure
+        if: failure()
+        run: |
+          echo "Tests failed, preventing merge"
+          exit 1
+
+  deploy:
+    needs: test
+    name: stage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: FTP-Deploy-Action
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_EPOS_LANDING_SERVER }}
+          username: ${{ secrets.FTP_EPOS_LANDING_USERNAME }}
+          password: ${{ secrets.FTP_EPOS_LANDING_PASSWORD }}
+          port: ${{ secrets.FTP_EPOS_LANDING_PORT }}
+          protocol: ftps
+          timeout: 30000
